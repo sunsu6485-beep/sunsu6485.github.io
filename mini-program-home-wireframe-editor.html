@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小程序首页板块编辑器</title>
+<style>
+:root{--canvas-width:338px;--panel-bg:rgba(249,248,243,.96);--line:#d9d4ca;--accent:#7a736a;--accent-soft:rgba(122,115,106,.12);--bg-top:#395f52;--bg-mid:#25463a;--bg-bottom:#132820}
+*{box-sizing:border-box}html,body{margin:0}
+body{font:14px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#1f1f1f;background:radial-gradient(circle at top,var(--bg-top) 0,var(--bg-mid) 35%,var(--bg-bottom) 100%)}
+button,select,input,textarea{font:inherit;width:100%;border:1.5px solid #222;background:#fff;border-radius:14px}button{min-height:42px;cursor:pointer;padding:10px 12px}input,select,textarea{padding:10px 12px}textarea{min-height:96px;resize:vertical}
+.app{min-height:100vh;display:grid;grid-template-columns:360px 240px 1fr;gap:24px;padding:24px}
+.side,.aux-card{background:var(--panel-bg);border-radius:24px;padding:20px;box-shadow:0 20px 48px rgba(0,0,0,.18)}.side{position:sticky;top:20px;height:fit-content}.aux{position:sticky;top:20px;height:fit-content}
+h1{margin:0 0 10px;font-size:28px;line-height:1.05}.desc{margin:0 0 16px;color:#4c4c4c;line-height:1.6}.sec{margin-top:18px;display:grid;gap:10px}.st{font-size:12px;color:#757575;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.g2,.g3{display:grid;gap:8px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}
+.box{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:12px;line-height:1.6}.box strong{display:block;margin-bottom:8px}.f{display:grid;gap:6px}.f label{font-size:12px;color:#757575}.rr{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.rnum{display:grid;grid-template-columns:1fr 58px auto;gap:8px;align-items:center}.rnum input[type=number]{padding:8px 8px;border-radius:10px;text-align:center}.unit{font-size:12px;color:#6b6b6b}.hint{font-size:12px;color:#6b6b6b}.a{background:#ece9e3;border-color:var(--accent);color:#4b463f}
+.phone-wrap{display:flex;justify-content:center;position:relative;overflow:visible}.phone{width:356px;padding:0;border-radius:24px;background:transparent;position:relative;left:0;top:0}.screen{display:flex;flex-direction:column;aspect-ratio:1 / 2;border-radius:22px;overflow:hidden;background:#fff;border:1px solid #e5dfd6;box-shadow:0 14px 30px rgba(0,0,0,.09)}
+.status{height:28px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 16px 5px;font-size:12px;font-weight:600;color:#111;background:#fff;cursor:grab;user-select:none;touch-action:none}.status.grabbing{cursor:grabbing}.status-time{letter-spacing:.01em}.status-icons{display:flex;align-items:center;gap:6px}
+.icon-signal{display:flex;align-items:flex-end;gap:1.5px;height:10px}.icon-signal span{width:2.5px;background:#111;border-radius:2px}.icon-signal span:nth-child(1){height:3px;opacity:.62}.icon-signal span:nth-child(2){height:5px;opacity:.75}.icon-signal span:nth-child(3){height:7px;opacity:.88}.icon-signal span:nth-child(4){height:9px}
+.icon-wifi{position:relative;width:12px;height:8px}.icon-wifi::before,.icon-wifi::after{content:"";position:absolute;left:50%;transform:translateX(-50%);border:1.6px solid #111;border-color:#111 transparent transparent transparent;border-radius:50%}.icon-wifi::before{top:0;width:12px;height:12px}.icon-wifi::after{top:3px;width:6px;height:6px}
+.icon-battery{position:relative;width:18px;height:9px;border:1.5px solid #111;border-radius:3px}.icon-battery::before{content:"";position:absolute;top:2px;right:-3px;width:2px;height:3px;border-radius:0 2px 2px 0;background:#111}.icon-battery::after{content:"";position:absolute;inset:1.5px;width:11px;background:#111;border-radius:1px}
+.viewport{position:relative;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:10px 10px 0;background:#fff;scrollbar-width:none;-ms-overflow-style:none;outline:none}.viewport::-webkit-scrollbar{width:0;height:0}
+.canvas{position:relative;width:var(--canvas-width);min-height:0;margin:0 auto;padding-bottom:0}
+.dock-slot{position:sticky;bottom:0;z-index:60;display:flex;justify-content:center;margin:0 -10px 0;padding:0 10px 0;background:#fff;pointer-events:none}.dock-slot .module{pointer-events:auto}
+.module{position:absolute;left:0;width:var(--canvas-width);background:transparent;touch-action:none}.module.sel{outline:1.5px solid var(--accent);outline-offset:4px;box-shadow:0 0 0 4px var(--accent-soft)}.module.ghost{opacity:.56}
+.stage{position:relative;width:100%;height:100%}.editable{position:absolute;user-select:none}.editable.selected{outline:1.5px dashed var(--accent);outline-offset:2px}.editable.editing{cursor:text;user-select:text}.e-text{display:block;white-space:pre-wrap;word-break:break-all;overflow-wrap:anywhere;cursor:move;z-index:20}.e-text.selected{z-index:28}.e-text.editing{z-index:40}.e-block{display:flex;align-items:center;justify-content:center;cursor:move;z-index:2}.e-block.selected{z-index:6}
+.surface{border:1.5px solid var(--line);border-radius:18px;background:#fffdfa;box-shadow:0 6px 18px rgba(0,0,0,.03)}.item-card{border:1.5px solid var(--line);border-radius:16px;background:#fffdfa}.pill-block{border:1.5px solid #d8d3c8;border-radius:999px;background:#fbfaf7}.button-block{border-radius:10px;background:#262626}.nav-shell{border-top:1px solid #ece6dc;background:#fff;box-shadow:0 -4px 14px rgba(0,0,0,.03)}.dot-block{border:none;border-radius:4px;background:#ddd8d0}
+.tt{font-weight:700;line-height:1.3}.ss{font-weight:400;color:#707070;line-height:1.5}.btn-text{color:#fff;font-size:12px;font-weight:700}.pill-text{font-size:11px;color:#666}.nav-text{font-size:11px;color:#555}
+.module-handle,.element-handle{position:absolute;width:10px;height:10px;background:#fff;border:1.5px solid var(--accent);border-radius:3px;z-index:30;pointer-events:auto}.n{top:-5px;left:calc(50% - 5px);cursor:n-resize}.s{bottom:-5px;left:calc(50% - 5px);cursor:s-resize}.e{right:-5px;top:calc(50% - 5px);cursor:e-resize}.w{left:-5px;top:calc(50% - 5px);cursor:w-resize}.ne{top:-5px;right:-5px;cursor:ne-resize}.nw{top:-5px;left:-5px;cursor:nw-resize}.se{bottom:-5px;right:-5px;cursor:se-resize}.sw{bottom:-5px;left:-5px;cursor:sw-resize}
+.guide,.placeholder,.overlay-guide{position:absolute;pointer-events:none}.guide.v,.overlay-guide.v{width:1px;background:rgba(122,115,106,.7)}.guide.h,.overlay-guide.h{height:1px;background:rgba(122,115,106,.7)}.placeholder{left:0;width:100%;height:8px;background:rgba(245,158,11,.9);border-radius:999px}
+.size-tag{position:absolute;pointer-events:none;border-radius:999px;padding:4px 8px;font-size:11px;background:rgba(245,244,241,.96);color:#514a43;border:1px solid rgba(122,115,106,.28)}
+.element-overlay{position:absolute;border:1.5px dashed var(--accent);box-shadow:0 0 0 3px rgba(122,115,106,.12);pointer-events:none;z-index:25}
+.shot-mode .module.sel{outline:none!important;box-shadow:none!important}
+.shot-mode .editable.selected{outline:none!important}
+.shot-mode .element-overlay,.shot-mode .module-handle,.shot-mode .element-handle,.shot-mode .guide,.shot-mode .overlay-guide,.shot-mode .size-tag,.shot-mode .placeholder{display:none!important}
+@media (max-width:1080px){.app{grid-template-columns:1fr}.side,.aux{position:static}}
+</style>
+</head>
+<body>
+<main class="app">
+  <aside class="side">
+    <h1>板块编辑器</h1>
+    <p class="desc">现在支持元素级编辑。每个文字块和色块都可以单独移动、缩放，并在边线、中线和对齐位置自动吸附。</p>
+    <div class="sec"><div class="st">新增板块</div><div class="g2">
+      <button data-add="hero">顶部卡</button><button data-add="login">登录卡</button>
+      <button data-add="entry">双入口</button><button data-add="quick">快捷区</button>
+      <button data-add="promo">活动位</button><button data-add="dish">推荐商品</button>
+      <button data-add="nav">底部导航</button><button id="dup">复制选中</button>
+    </div></div>
+    <div class="sec"><div class="st">全局操作</div><div class="g2">
+      <button id="undo">撤销</button><button id="del">删除选中</button><button id="reset">恢复初始</button>
+      <button id="shot">截图下载</button>
+    </div></div>
+    <div class="sec"><div class="st">选中板块配置</div><div class="box" id="ins"><strong>未选中</strong>点击右侧任意板块开始编辑。</div></div>
+  </aside>
+
+  <aside class="aux"><div class="aux-card" id="aux"><strong>文字与排版</strong>选中板块后，这里显示文字对齐、标题方向和文本编辑。</div></aside>
+
+  <section class="phone-wrap">
+    <div class="phone">
+      <div class="screen">
+        <div class="status">
+          <div class="status-time">9:41</div>
+          <div class="status-icons">
+            <div class="icon-signal"><span></span><span></span><span></span><span></span></div>
+            <div class="icon-wifi"></div>
+            <div class="icon-battery"></div>
+          </div>
+        </div>
+        <div class="viewport" tabindex="0">
+          <div class="canvas" id="cv"></div>
+          <div class="dock-slot" id="dock"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+const cv=document.getElementById('cv'),dock=document.getElementById('dock'),ins=document.getElementById('ins'),aux=document.getElementById('aux'),dup=document.getElementById('dup'),del=document.getElementById('del'),reset=document.getElementById('reset'),shot=document.getElementById('shot'),screenEl=document.querySelector('.screen'),viewportEl=document.querySelector('.viewport'),statusBar=document.querySelector('.status'),phoneEl=document.querySelector('.phone');
+const SPEC={hero:{label:'顶部卡',width:338,height:120,rec:'338×96-120',layouts:[]},login:{label:'登录卡',width:338,height:80,rec:'338×72-90',layouts:[]},entry:{label:'双入口',width:338,itemH:116,rec:'338×110-160',layouts:[1,2,3]},quick:{label:'快捷区',width:338,itemH:82,rec:'338×72-100',layouts:[2,3,4]},promo:{label:'活动位',width:338,height:74,rec:'338×72-96',layouts:[]},dish:{label:'推荐商品',width:338,itemH:140,rec:'338×120-160',layouts:[1,2,3]},nav:{label:'底部导航',width:338,itemH:62,rec:'338×60-72',layouts:[3,4,5]}};
+let modules=[],selectedId=null,selectedElement=null,focusText=null,drag=null,editingText=null,lastTextTap=null;
+let historyStack=[],historyLock=false;
+let statusHoldTimer=null,statusDrag=null,phoneOffset={x:0,y:0};
+const uid=()=>`m-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,clamp=(n,min,max)=>Math.max(min,Math.min(max,n)),snap=(n,step=2)=>Math.round(n/step)*step,HANDLES=['n','s','e','w','ne','nw','se','sw'],SNAP_THRESHOLD=6;
+const hasItems=m=>Array.isArray(m.items),isNav=m=>m.type==='nav',navModule=()=>modules.find(isNav)||null,flowModules=()=>modules.filter(m=>!isNav(m)),current=()=>modules.find(m=>m.id===selectedId)||null;
+const getByPath=(obj,path)=>path.split('.').reduce((acc,key)=>acc?.[key],obj);
+function setByPath(obj,path,value){const keys=path.split('.');let ref=obj;for(let i=0;i<keys.length-1;i++)ref=ref[keys[i]];ref[keys.at(-1)]=value}
+function captureState(){return JSON.stringify({modules,selectedId,selectedElement,focusText})}
+function updateUndoButton(){document.getElementById('undo')?.toggleAttribute('disabled',historyStack.length<2)}
+function commitHistory(){if(historyLock)return;const shot=captureState();if(historyStack.at(-1)!==shot)historyStack.push(shot);if(historyStack.length>80)historyStack.shift();updateUndoButton()}
+function restoreHistory(shot){historyLock=true;const state=JSON.parse(shot);modules=state.modules;selectedId=state.selectedId;selectedElement=state.selectedElement;focusText=state.focusText;drag=null;editingText=null;lastTextTap=null;renderAll();historyLock=false;updateUndoButton()}
+function undoHistory(){if(historyStack.length<2)return;historyStack.pop();restoreHistory(historyStack.at(-1))}
+function loadHtml2Canvas(){return new Promise((resolve,reject)=>{if(window.html2canvas)return resolve(window.html2canvas);const old=document.getElementById('html2canvas-cdn');if(old){old.addEventListener('load',()=>resolve(window.html2canvas),{once:true});old.addEventListener('error',reject,{once:true});return}const script=document.createElement('script');script.id='html2canvas-cdn';script.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';script.onload=()=>resolve(window.html2canvas);script.onerror=()=>reject(new Error('html2canvas load failed'));document.head.appendChild(script)})}
+function downloadDataUrl(dataUrl,name){const a=document.createElement('a');a.href=dataUrl;a.download=name;document.body.appendChild(a);a.click();a.remove()}
+function buildExportScreen(){
+  const shell=document.createElement('div');
+  shell.style.cssText=`position:fixed;left:-99999px;top:0;width:${Math.round(screenEl.getBoundingClientRect().width)}px;background:#fff;border:1px solid #e5dfd6;border-radius:22px;overflow:hidden;z-index:-1`;
+
+  const statusClone=statusBar.cloneNode(true);
+  statusClone.classList.remove('grabbing');
+  shell.appendChild(statusClone);
+
+  const body=document.createElement('div');
+  body.style.cssText='background:#fff;padding:10px 10px 0';
+
+  const canvasClone=cv.cloneNode(true);
+  const contentH=Math.max(cv.scrollHeight,cv.getBoundingClientRect().height);
+  canvasClone.style.minHeight=`${Math.ceil(contentH)}px`;
+  canvasClone.style.height=`${Math.ceil(contentH)}px`;
+  canvasClone.style.paddingBottom='0';
+  canvasClone.querySelectorAll('.selected,.element-overlay,.module-handle,.element-handle,.guide,.overlay-guide,.size-tag,.placeholder').forEach(node=>{
+    node.classList.remove('selected');
+    if(node.classList.contains('element-overlay')||node.classList.contains('module-handle')||node.classList.contains('element-handle')||node.classList.contains('guide')||node.classList.contains('overlay-guide')||node.classList.contains('size-tag')||node.classList.contains('placeholder'))node.remove()
+  });
+  body.appendChild(canvasClone);
+
+  const navSrc=dock.querySelector('.module');
+  if(navSrc){
+    const navWrap=document.createElement('div');
+    navWrap.style.cssText='display:flex;justify-content:center;background:#fff';
+    const navClone=navSrc.cloneNode(true);
+    navClone.style.position='relative';
+    navClone.style.left='0';
+    navClone.style.top='0';
+    navClone.style.zIndex='auto';
+    navClone.querySelectorAll('.selected,.element-overlay,.module-handle,.element-handle,.guide,.overlay-guide,.size-tag,.placeholder').forEach(node=>{
+      node.classList.remove('selected');
+      if(node.classList.contains('element-overlay')||node.classList.contains('module-handle')||node.classList.contains('element-handle')||node.classList.contains('guide')||node.classList.contains('overlay-guide')||node.classList.contains('size-tag')||node.classList.contains('placeholder'))node.remove()
+    });
+    navWrap.appendChild(navClone);
+    body.appendChild(navWrap)
+  }
+
+  shell.appendChild(body);
+  document.body.appendChild(shell);
+  return shell
+}
+async function captureScreen(){
+  if(!shot)return;
+  const prev=shot.textContent;
+  shot.disabled=true;
+  shot.textContent='截图中';
+  document.body.classList.add('shot-mode');
+  let exportNode=null;
+  try{
+    const html2canvas=await loadHtml2Canvas();
+    exportNode=buildExportScreen();
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    const canvas=await html2canvas(exportNode,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false});
+    const stamp=new Date().toISOString().replace(/[-:]/g,'').replace('T','-').slice(0,15);
+    downloadDataUrl(canvas.toDataURL('image/png'),`mini-program-screen-${stamp}.png`)
+  }catch(err){
+    console.error(err);
+    alert('截图失败，请稍后重试')
+  }finally{
+    exportNode?.remove();
+    document.body.classList.remove('shot-mode');
+    shot.disabled=false;
+    shot.textContent=prev
+  }
+}
+function renderPhoneOffset(){phoneEl.style.left=`${phoneOffset.x}px`;phoneEl.style.top=`${phoneOffset.y}px`}
+function startStatusHold(e){if(e.button!==0)return;clearTimeout(statusHoldTimer);statusHoldTimer=setTimeout(()=>{statusDrag={sx:e.clientX,sy:e.clientY,startX:phoneOffset.x,startY:phoneOffset.y};statusBar.classList.add('grabbing')},220)}
+function moveStatusHold(e){if(!statusDrag)return;const dx=e.clientX-statusDrag.sx,dy=e.clientY-statusDrag.sy;phoneOffset.x=Math.round(statusDrag.startX+dx);phoneOffset.y=Math.round(statusDrag.startY+dy);renderPhoneOffset()}
+function endStatusHold(){clearTimeout(statusHoldTimer);statusHoldTimer=null;if(statusDrag){statusDrag=null;statusBar.classList.remove('grabbing')}}
+function moduleHeight(m){if(!hasItems(m))return m.height;const rows=Math.ceil(m.items.length/m.st.col);return rows*m.st.itemH+Math.max(0,rows-1)*m.st.gap}
+function textStyle(m,el){const size=el.fs??(el.sub?m.st.ss:m.st.ts),align=m.st.al,vertical=m.st.dir==='vertical'&&!el.sub;return[`font-size:${size}px`,`text-align:${align}`,vertical?'writing-mode:vertical-lr;text-orientation:mixed':''].filter(Boolean).join(';')}
+function measurePill(text){return Math.max(48,text.length*9+22)}
+function safeText(v){return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function resetElementLayouts(m){const keep={};Object.entries(m.fx||{}).forEach(([eid,val])=>{if(!val)return;const next={};if(typeof val.fs==='number')next.fs=val.fs;if(val.deleted)next.deleted=true;if(Object.keys(next).length)keep[eid]=next});m.fx=keep;if(selectedElement?.mid===m.id)selectedElement=null}
+function mk(type){const spec=SPEC[type],base={id:uid(),type,width:spec.width,height:spec.height||spec.itemH,x:0,y:0,afterGap:12,st:{ts:type==='hero'?17:16,ss:12,al:'left',dir:'horizontal',col:spec.layouts[0]||1,gap:10,itemH:spec.itemH||80},fx:{},extraTexts:[]};if(type==='hero')return{...base,title:'春茶古味 / 当前门店',tags:['营业中','距您 1.2km','预计 28 分钟']};if(type==='login')return{...base,title:'欢迎登录小程序',sub:'登录可领取优惠券、查看订单、同步会员权益',btn:'立即登录'};if(type==='promo')return{...base,title:'春季品质甄选',sub:'适合放今日推荐'};if(type==='entry')return{...base,st:{...base.st,col:2,itemH:116,gap:10},items:[{title:'门店自取',sub:'提前下单，到店直接拿'},{title:'外卖点单',sub:'浏览菜单，下单配送到家'}]};if(type==='quick')return{...base,st:{...base.st,col:3,itemH:82,gap:10},items:[{title:'优惠券'},{title:'我的订单'},{title:'会员中心'}]};if(type==='dish')return{...base,st:{...base.st,col:2,itemH:140,gap:10},items:[{title:'招牌双人套餐',sub:'爆款 / 高转化'},{title:'午市轻食套餐',sub:'工作日高频'}]};return{...base,afterGap:0,st:{...base.st,col:4,itemH:62,gap:0},items:[{title:'首页'},{title:'点餐'},{title:'订单'},{title:'我的'}]}}
+function resetState(){modules=[mk('hero'),mk('login'),mk('entry'),mk('quick'),mk('promo'),mk('dish'),mk('nav')];selectedId=modules[0].id;selectedElement=null;focusText=null;layoutFlow();renderAll();historyStack=[captureState()];updateUndoButton()}
+function layoutFlow(){
+  let y=0;
+  flowModules().forEach(m=>{
+    m.y=y;
+    y+=moduleHeight(m)+(m.afterGap??12)
+  });
+  const navH=navModule()?.st?.itemH||62;
+  const viewportH=viewportEl?.clientHeight||0;
+  const contentH=Math.max(0,y);
+  const minVisible=Math.max(0,viewportH-navH-10);
+  cv.style.minHeight=`${Math.max(contentH,minVisible)}px`
+}
+function mergeElement(m,el){const fx=m.fx?.[el.eid]||{};return{...el,x:fx.x??el.x,y:fx.y??el.y,w:fx.w??el.w,h:fx.h??el.h,fs:fx.fs??el.fs,deleted:!!fx.deleted}}
+function handlePos(rect,pos){const cx=rect.x+rect.w/2-5,cy=rect.y+rect.h/2-5;const map={n:[cx,rect.y-5],s:[cx,rect.y+rect.h-5],e:[rect.x+rect.w-5,cy],w:[rect.x-5,cy],ne:[rect.x+rect.w-5,rect.y-5],nw:[rect.x-5,rect.y-5],se:[rect.x+rect.w-5,rect.y+rect.h-5],sw:[rect.x-5,rect.y+rect.h-5]};const [left,top]=map[pos];return`left:${left}px;top:${top}px`}
+function moduleElements(m){const w=m.width,h=moduleHeight(m);let els=[];if(m.type==='hero'){els=[{eid:'hero.bg',kind:'block',className:'surface',x:0,y:0,w,h,selectable:false},{eid:'hero.title',kind:'text',path:'title',className:'tt',x:18,y:18,w:150,h:70,sub:false,fs:m.st.ts}];let x=18;const tagW=Math.max(...m.tags.map(measurePill));m.tags.forEach((tag,i)=>{els.push({eid:`hero.tagbg.${i}`,kind:'block',className:'pill-block',x,y:h-42,w:tagW,h:28,selectable:true},{eid:`hero.tagtxt.${i}`,kind:'text',path:`tags.${i}`,className:'pill-text',x:x+10,y:h-35,w:tagW-20,h:16,sub:true,fs:m.st.ss});x+=tagW+8})}
+if(m.type==='login')els=[{eid:'login.bg',kind:'block',className:'surface',x:0,y:0,w,h,selectable:false},{eid:'login.title',kind:'text',path:'title',className:'tt',x:14,y:14,w:170,h:20,sub:false,fs:m.st.ts},{eid:'login.sub',kind:'text',path:'sub',className:'ss',x:14,y:40,w:180,h:32,sub:true,fs:m.st.ss},{eid:'login.btnbg',kind:'block',className:'button-block',x:w-92,y:18,w:82,h:34,selectable:true},{eid:'login.btntxt',kind:'text',path:'btn',className:'btn-text',x:w-82,y:27,w:62,h:14,sub:true,fs:12}];
+if(m.type==='promo')els=[{eid:'promo.bg',kind:'block',className:'surface',x:0,y:0,w,h,selectable:false},{eid:'promo.title',kind:'text',path:'title',className:'tt',x:18,y:15,w:w-36,h:20,sub:false,fs:m.st.ts},{eid:'promo.sub',kind:'text',path:'sub',className:'ss',x:18,y:40,w:w-36,h:16,sub:true,fs:m.st.ss}];
+if(m.type==='entry'){const cols=m.st.col,gap=m.st.gap,cardW=(w-gap*(cols-1))/cols;m.items.forEach((item,i)=>{const row=Math.floor(i/cols),col=i%cols,x=col*(cardW+gap),y=row*(m.st.itemH+gap);els.push({eid:`entry.bg.${i}`,kind:'block',className:'item-card',x,y,w:cardW,h:m.st.itemH,selectable:false},{eid:`entry.title.${i}`,kind:'text',path:`items.${i}.title`,className:'tt',x:x+16,y:y+16,w:cardW-32,h:24,sub:false,fs:m.st.ts},{eid:`entry.sub.${i}`,kind:'text',path:`items.${i}.sub`,className:'ss',x:x+16,y:y+m.st.itemH-40,w:cardW-32,h:28,sub:true,fs:m.st.ss})})}
+if(m.type==='quick'){const cols=m.st.col,gap=m.st.gap,cardW=(w-gap*(cols-1))/cols;m.items.forEach((item,i)=>{const row=Math.floor(i/cols),col=i%cols,x=col*(cardW+gap),y=row*(m.st.itemH+gap);els.push({eid:`quick.bg.${i}`,kind:'block',className:'item-card',x,y,w:cardW,h:m.st.itemH,selectable:false},{eid:`quick.dot.${i}`,kind:'block',className:'dot-block',x:x+(cardW-12)/2,y:y+14,w:12,h:12,selectable:true},{eid:`quick.title.${i}`,kind:'text',path:`items.${i}.title`,className:'tt',x:x+10,y:y+40,w:cardW-20,h:20,sub:false,fs:m.st.ts})})}
+if(m.type==='dish'){const cols=m.st.col,gap=m.st.gap,cardW=(w-gap*(cols-1))/cols;m.items.forEach((item,i)=>{const row=Math.floor(i/cols),col=i%cols,x=col*(cardW+gap),y=row*(m.st.itemH+gap);els.push({eid:`dish.bg.${i}`,kind:'block',className:'item-card',x,y,w:cardW,h:m.st.itemH,selectable:false},{eid:`dish.title.${i}`,kind:'text',path:`items.${i}.title`,className:'tt',x:x+14,y:y+28,w:cardW-28,h:48,sub:false,fs:m.st.ts},{eid:`dish.sub.${i}`,kind:'text',path:`items.${i}.sub`,className:'ss',x:x+14,y:y+m.st.itemH-30,w:cardW-28,h:20,sub:true,fs:m.st.ss})})}
+if(m.type==='nav'){const cols=m.st.col,cellW=w/cols;els=[{eid:'nav.bg',kind:'block',className:'nav-shell',x:0,y:0,w,h:m.st.itemH,selectable:false}];m.items.forEach((item,i)=>{const cx=i*cellW;els.push({eid:`nav.dot.${i}`,kind:'block',className:'dot-block',x:cx+(cellW-12)/2,y:10,w:12,h:12,selectable:true},{eid:`nav.title.${i}`,kind:'text',path:`items.${i}.title`,className:'nav-text',x:cx+4,y:28,w:cellW-8,h:18,sub:true,fs:11})})}
+;(m.extraTexts||[]).forEach((item,i)=>{els.push({eid:`extra.${i}`,kind:'text',path:`extraTexts.${i}.text`,className:item.sub?'ss':'tt',x:item.x,y:item.y,w:item.w,h:item.h,sub:item.sub,fs:item.fs??(item.sub?m.st.ss:m.st.ts)})})
+return els.map(el=>mergeElement(m,el)).filter(el=>!el.deleted)}
+function elStyle(m,el){const base=[`left:${el.x}px`,`top:${el.y}px`,`width:${el.w}px`,`height:${el.h}px`];if(el.kind==='text')base.push(textStyle(m,el));return base.join(';')}
+function renderElement(m,el){const sel=selectedElement&&selectedElement.mid===m.id&&selectedElement.eid===el.eid,cls=['editable',el.kind==='text'?'e-text':'e-block',el.className,sel?'selected':'',editingText&&editingText.mid===m.id&&editingText.eid===el.eid?'editing':''].filter(Boolean).join(' '),selFlag=el.selectable===false?'false':'true';if(el.kind==='text'){const value=getByPath(m,el.path)??'';return `<div class="${cls}" data-mid="${m.id}" data-eid="${el.eid}" data-kind="${el.kind}" data-path="${el.path}" data-selectable="${selFlag}" style="${elStyle(m,el)}">${safeText(value)}</div>`}return `<div class="${cls}" data-mid="${m.id}" data-eid="${el.eid}" data-kind="${el.kind}" data-selectable="${selFlag}" style="${elStyle(m,el)}"></div>`}
+function moduleStageMarkup(m){return `<div class="stage">${moduleElements(m).map(el=>renderElement(m,el)).join('')}</div>`}
+function renderModuleElement(m,topOverride=null){const top=topOverride==null?m.y:topOverride,el=document.createElement('section');el.className=`module ${selectedId===m.id?'sel':''} ${drag&&drag.mid===m.id&&drag.scope==='module'?'ghost':''}`;el.dataset.id=m.id;el.style.top=`${top}px`;el.style.width=`${m.width}px`;el.style.height=`${moduleHeight(m)}px`;el.innerHTML=moduleStageMarkup(m);if(selectedId===m.id&&!selectedElement&&!isNav(m))el.insertAdjacentHTML('beforeend',HANDLES.map(pos=>`<div class="module-handle ${pos}" data-module-resize="${pos}"></div>`).join(''));if(selectedElement&&selectedElement.mid===m.id){const target=moduleElements(m).find(item=>item.eid===selectedElement.eid);if(target){const stage=el.querySelector('.stage');const overlay=document.createElement('div');overlay.className='element-overlay';overlay.style.left=`${target.x}px`;overlay.style.top=`${target.y}px`;overlay.style.width=`${target.w}px`;overlay.style.height=`${target.h}px`;stage.appendChild(overlay);HANDLES.forEach(pos=>{const handle=document.createElement('div');handle.className=`element-handle ${pos}`;handle.dataset.elResize=pos;handle.dataset.mid=m.id;handle.dataset.eid=target.eid;handle.style.cssText=handlePos(target,pos);stage.appendChild(handle)});if(drag&&drag.scope==='element'&&drag.guides?.length){drag.guides.forEach(g=>{const line=document.createElement('div');line.className=`overlay-guide ${g.axis}`;if(g.axis==='v'){line.style.left=`${g.pos}px`;line.style.top='0';line.style.height='100%'}else{line.style.top=`${g.pos}px`;line.style.left='0';line.style.width='100%'}stage.appendChild(line)})}}}return el}
+function renderCanvas(){cv.innerHTML='';flowModules().forEach(m=>{const top=drag&&drag.scope==='module'&&drag.mid===m.id&&drag.mode==='move'?drag.top:m.y;cv.appendChild(renderModuleElement(m,top))});const m=current();if(m&&!selectedElement&&drag&&drag.scope==='module')drawModuleGuides(m);if(drag&&drag.scope==='module'&&drag.mode==='move'&&drag.placeholderY!=null){const ph=document.createElement('div');ph.className='placeholder';ph.style.top=`${drag.placeholderY}px`;cv.appendChild(ph)}}
+function renderDock(){dock.innerHTML='';const nav=navModule();if(!nav)return;const wrap=renderModuleElement(nav,0);wrap.style.position='relative';wrap.style.left='0';wrap.style.top='0';wrap.style.zIndex='70';dock.appendChild(wrap)}
+function drawModuleGuides(m){const x=m.x||0,y=m.y,w=m.width,h=moduleHeight(m);[['v',x],['v',x+w],['h',y],['h',y+h]].forEach(([axis,pos])=>{const line=document.createElement('div');line.className=`guide ${axis}`;if(axis==='v'){line.style.left=`${pos}px`;line.style.top='0';line.style.height='100%'}else{line.style.top=`${pos}px`;line.style.left='0';line.style.width='100%'}cv.appendChild(line)});const tag=document.createElement('div');tag.className='size-tag';tag.style.left=`${Math.max(6,x+w/2-52)}px`;tag.style.top=`${Math.max(6,y-28)}px`;tag.textContent=`${Math.round(w)}×${Math.round(h)} / 建议 ${SPEC[m.type].rec}`;cv.appendChild(tag)}
+function renderAll(){layoutFlow();renderCanvas();renderDock();renderPanel();renderAuxPanel();focusInlineEditable()}
+function focusInlineEditable(){if(!editingText)return;const node=document.querySelector(`.editable[data-mid="${editingText.mid}"][data-eid="${editingText.eid}"]`);if(!node)return;node.setAttribute('contenteditable','true');node.focus();const sel=window.getSelection();const range=document.createRange();range.selectNodeContents(node);range.collapse(false);sel.removeAllRanges();sel.addRange(range);const finish=save=>{if(save){const m=modules.find(x=>x.id===editingText.mid);if(m&&editingText.path)setByPath(m,editingText.path,node.innerText.trim()||' ')}editingText=null;node.removeAttribute('contenteditable');renderAll();if(save)commitHistory()};node.onblur=()=>finish(true);node.onkeydown=ev=>{if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();finish(true)}if(ev.key==='Escape'){ev.preventDefault();finish(false)}}}
+function activateInlineEdit(target){const path=target.dataset.path;if(!path)return;editingText={mid:target.dataset.mid,eid:target.dataset.eid,path};selectedId=target.dataset.mid;selectedElement={mid:target.dataset.mid,eid:target.dataset.eid};focusText=path;renderPanel();renderAuxPanel();target.classList.add('editing');target.setAttribute('contenteditable','true');target.focus();const sel=window.getSelection(),range=document.createRange();range.selectNodeContents(target);range.collapse(false);sel.removeAllRanges();sel.addRange(range);const finish=save=>{if(save){const m=modules.find(x=>x.id===target.dataset.mid);if(m)setByPath(m,path,target.innerText.trim()||' ')}editingText=null;target.removeAttribute('contenteditable');renderAll();if(save)commitHistory()};target.onblur=()=>finish(true);target.onkeydown=ev=>{if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();finish(true)}if(ev.key==='Escape'){ev.preventDefault();finish(false)}}}
+function resolveTextTarget(target){
+  const direct=target.closest('.editable[data-kind="text"]');
+  if(direct){
+    const mid=direct.dataset.mid,eid=direct.dataset.eid;
+    return document.querySelector(`.editable[data-mid="${mid}"][data-eid="${eid}"]`)||direct
+  }
+  if(selectedElement){
+    const m=modules.find(x=>x.id===selectedElement.mid);
+    const el=m&&currentElementRect(m,selectedElement.eid);
+    if(el?.kind==='text')return document.querySelector(`.editable[data-mid="${selectedElement.mid}"][data-eid="${selectedElement.eid}"]`)
+  }
+  return null
+}
+function selectModule(id){if(selectedId!==id){selectedElement=null;focusText=null}selectedId=id;renderAll();viewportEl.focus()}
+function selectElement(mid,eid,path=null){selectedId=mid;selectedElement={mid,eid};focusText=path||null;renderAll();viewportEl.focus()}
+function addModule(type){if(type==='nav'&&navModule()){selectModule(navModule().id);return}const mod=mk(type);modules.push(mod);selectedId=mod.id;selectedElement=null;focusText=null;renderAll();commitHistory()}
+function duplicateSelected(){const m=current();if(!m||isNav(m))return;const copy=JSON.parse(JSON.stringify(m));copy.id=uid();modules.splice(modules.findIndex(item=>item.id===m.id)+1,0,copy);selectedId=copy.id;selectedElement=null;focusText=null;renderAll();commitHistory()}
+function removeExtraText(m,eid){const idx=Number(eid.split('.').at(-1));if(Number.isNaN(idx)||!Array.isArray(m.extraTexts)||!m.extraTexts[idx])return false;m.extraTexts.splice(idx,1);const nextFx={};Object.entries(m.fx||{}).forEach(([key,val])=>{if(!key.startsWith('extra.')){nextFx[key]=val;return}const cur=Number(key.split('.').at(-1));if(Number.isNaN(cur)||cur===idx)return;if(cur>idx)nextFx[`extra.${cur-1}`]=val;else nextFx[key]=val});m.fx=nextFx;return true}
+function deleteSelected(){const m=current();if(!m)return;if(selectedElement&&selectedElement.mid===m.id){const eid=selectedElement.eid;if(eid.startsWith('extra.'))removeExtraText(m,eid);else m.fx[eid]={...(m.fx[eid]||{}),deleted:true};selectedElement=null;focusText=null;renderAll();commitHistory();return}modules=modules.filter(item=>item.id!==m.id);selectedId=modules[0]?.id||null;selectedElement=null;focusText=null;renderAll();commitHistory()}
+function addItem(m){if(!hasItems(m))return;if(m.type==='entry')m.items.push({title:`入口 ${m.items.length+1}`,sub:'这里填写说明文案'});else if(m.type==='quick')m.items.push({title:`快捷 ${m.items.length+1}`});else if(m.type==='dish')m.items.push({title:`推荐商品 ${m.items.length+1}`,sub:'这里填写标签或卖点'});else if(m.type==='nav')m.items.push({title:`导航 ${m.items.length+1}`});resetElementLayouts(m)}
+function removeItem(m){if(!hasItems(m)||m.items.length<=1)return;m.items.pop();resetElementLayouts(m)}
+function addTextBox(m,sub){const idx=(m.extraTexts||[]).length;m.extraTexts.push({text:sub?'副标题':'主标题',sub,x:24,y:24+idx*34,w:sub?140:90,h:sub?28:78,fs:sub?m.st.ss:m.st.ts})}
+function applyRoleFontSize(m,sub,size){if(sub)m.st.ss=size;else m.st.ts=size;moduleElements(m).filter(el=>el.kind==='text'&&!!el.sub===sub).forEach(el=>{m.fx[el.eid]={...(m.fx[el.eid]||{}),fs:size}})}
+function rangeField(id,label,value,min,max){return `<div class="f"><label>${label}</label><div class="rnum"><input id="${id}" type="range" min="${min}" max="${max}" value="${value}"><input id="${id}Num" type="number" min="${min}" max="${max}" value="${value}"><span class="unit">px</span></div></div>`}
+function renderPanel(){const m=current();if(!m){ins.innerHTML='<strong>未选中</strong>点击右侧任意板块开始编辑。';return}const selectedText=selectedElement&&selectedElement.mid===m.id?currentElementRect(m,selectedElement.eid):null;const textControl=selectedText&&selectedText.kind==='text'?rangeField('textFs','当前文字字号',selectedText.fs??(selectedText.sub?m.st.ss:m.st.ts),10,36):`<div class="hint">先点中某段文字，再调它的字号。</div>`;const roleControls=`${rangeField('titleFs','主标题字号',m.st.ts,10,40)}${rangeField('subFs','副标题字号',m.st.ss,10,32)}`;const itemControls=hasItems(m)?`${rangeField('itemH','卡片高度',m.st.itemH,56,400)}${rangeField('gap','间距大小',m.st.gap,0,24)}`:`${rangeField('blockH','板块高度',m.height,64,400)}`;const afterGapControl=!isNav(m)?rangeField('afterGap','与下方板块间距',m.afterGap??12,0,40):'';const layoutButtons=SPEC[m.type].layouts.length?`<div class="f"><label>布局配置</label><div class="g3">${SPEC[m.type].layouts.map(n=>`<button data-layout="${n}" class="${m.st.col===n?'a':''}">${n} 列</button>`).join('')}</div></div>`:'';const itemButtons=hasItems(m)?`<div class="f"><label>板块项</label><div class="g2"><button id="addItem">新增模块项</button><button id="removeItem">删除最后一项</button></div></div>`:'';const elHint=selectedElement?`<div class="hint">当前选中元素：${selectedElement.eid}。拖动可移动，拖角点可缩放，靠近边线和中线会自动吸附。</div>`:'<div class="hint">先点板块里的文字块或色块，再拖动或缩放它。</div>';ins.innerHTML=`<strong>${SPEC[m.type].label}</strong>${roleControls}${textControl}<div>尺寸：${Math.round(m.width)} × ${Math.round(moduleHeight(m))}</div><div>建议：${SPEC[m.type].rec}</div>${itemControls}${afterGapControl}${layoutButtons}${itemButtons}${elHint}`;bindPanelEvents(m)}
+function buildTextEditor(m,path){const value=getByPath(m,path)??'',multi=path.includes('.sub')||path==='sub';return `<div class="box"><strong>文本编辑</strong><div class="f"><label>${safeText(path)}</label>${multi?`<textarea id="txtEdit">${safeText(value)}</textarea>`:`<input id="txtEdit" value="${safeText(value)}">`}</div></div>`}
+function renderAuxPanel(){const m=current();if(!m){aux.innerHTML='<strong>文字与排版</strong>选中板块后，这里显示文字对齐、标题方向和文本编辑。';return}const addTextPanel=`<div class="box"><strong>添加文本框</strong><div class="g2"><button id="addTitleText">添加主标题</button><button id="addSubText">添加副标题</button></div></div>`;const textPanel=focusText?buildTextEditor(m,focusText):'<div class="box"><strong>文本编辑</strong>点击文字元素后，这里会出现对应输入框。</div>';aux.innerHTML=`<div class="st">文字与排版</div><div class="f"><label>文字对齐</label><select id="alignSel"><option value="left"${m.st.al==='left'?' selected':''}>左对齐</option><option value="center"${m.st.al==='center'?' selected':''}>居中</option><option value="right"${m.st.al==='right'?' selected':''}>右对齐</option></select></div><div class="f"><label>标题方向</label><select id="dirSel"><option value="horizontal"${m.st.dir==='horizontal'?' selected':''}>横向</option><option value="vertical"${m.st.dir==='vertical'?' selected':''}>竖向</option></select></div>${addTextPanel}${textPanel}`;bindAuxEvents(m)}
+function updateTextPreview(m,path,value){setByPath(m,path,value);renderCanvas();renderDock()}
+function animateRangeTo(range,num,target,apply,done){cancelAnimationFrame(range._raf||0);const from=Number(range.value),to=Number(target),start=performance.now(),dur=140;const tick=now=>{const p=Math.min((now-start)/dur,1),v=Math.round(from+(to-from)*p);range.value=v;if(num&&document.activeElement!==num)num.value=v;apply(v);if(p<1)range._raf=requestAnimationFrame(tick);else done?.()};range._raf=requestAnimationFrame(tick)}
+function bindRangePair(id,setter,needsLayout=false){const range=document.getElementById(id),num=document.getElementById(`${id}Num`);if(!range)return;const apply=v=>{setter(v);if(num&&document.activeElement!==num)num.value=v;if(needsLayout)layoutFlow();renderCanvas();renderDock()};range.addEventListener('input',()=>apply(Number(range.value)));range.addEventListener('change',()=>{renderAll();commitHistory()});if(num){const run=()=>{const target=clamp(Number(num.value)||0,Number(range.min),Number(range.max));animateRangeTo(range,num,target,apply,()=>{renderAll();commitHistory()})};num.addEventListener('change',run);num.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();run();num.blur()}})}}
+function bindPanelEvents(m){bindRangePair('textFs',v=>{if(selectedElement&&selectedElement.mid===m.id){m.fx[selectedElement.eid]={...(m.fx[selectedElement.eid]||{}),fs:v}}});bindRangePair('titleFs',v=>applyRoleFontSize(m,false,v));bindRangePair('subFs',v=>applyRoleFontSize(m,true,v));bindRangePair('itemH',v=>{m.st.itemH=v;resetElementLayouts(m)},true);bindRangePair('gap',v=>{m.st.gap=v;resetElementLayouts(m)},true);bindRangePair('blockH',v=>{m.height=v;resetElementLayouts(m)},true);bindRangePair('afterGap',v=>{m.afterGap=v},true);ins.querySelectorAll('[data-layout]').forEach(btn=>btn.addEventListener('click',()=>{m.st.col=Number(btn.dataset.layout);resetElementLayouts(m);renderAll();commitHistory()}));document.getElementById('addItem')?.addEventListener('click',()=>{addItem(m);renderAll();commitHistory()});document.getElementById('removeItem')?.addEventListener('click',()=>{removeItem(m);renderAll();commitHistory()})}
+function bindAuxEvents(m){aux.querySelector('#alignSel')?.addEventListener('change',e=>{m.st.al=e.target.value;renderAll();commitHistory()});aux.querySelector('#dirSel')?.addEventListener('change',e=>{m.st.dir=e.target.value;renderAll();commitHistory()});aux.querySelector('#addTitleText')?.addEventListener('click',()=>{addTextBox(m,false);renderAll();commitHistory()});aux.querySelector('#addSubText')?.addEventListener('click',()=>{addTextBox(m,true);renderAll();commitHistory()});const txt=aux.querySelector('#txtEdit');if(txt&&focusText){if(!editingText){txt.focus();txt.setSelectionRange?.(txt.value.length,txt.value.length)}txt.addEventListener('input',()=>updateTextPreview(m,focusText,txt.value));txt.addEventListener('change',()=>commitHistory());txt.addEventListener('blur',()=>commitHistory())}}
+const currentElementRect=(m,eid)=>moduleElements(m).find(el=>el.eid===eid);
+function saveElementRect(m,eid,rect,opts={}){const free=!!opts.free;m.fx[eid]={...(m.fx[eid]||{}),x:free?Math.round(rect.x):snap(rect.x),y:free?Math.round(rect.y):snap(rect.y),w:free?Math.round(rect.w):snap(rect.w),h:free?Math.round(rect.h):snap(rect.h)}}
+function snapAxis(pos,size,candidates,limit,axis){let best=null;const checks=[{value:pos,apply:v=>v},{value:pos+size/2,apply:v=>v-size/2},{value:pos+size,apply:v=>v-size}];checks.forEach(check=>candidates.forEach(c=>{const diff=c.value-check.value;if(Math.abs(diff)<=SNAP_THRESHOLD&&(!best||Math.abs(diff)<Math.abs(best.diff)))best={diff,pos:check.apply(c.value),guide:{axis,pos:c.value}}}));if(!best)return{pos:clamp(pos,0,limit-size),guide:null};return{pos:clamp(best.pos,0,limit-size),guide:best.guide}}
+function snapRect(m,eid,rect){const stageW=m.width,stageH=moduleHeight(m),others=moduleElements(m).filter(el=>el.eid!==eid),v=[{value:0},{value:stageW/2},{value:stageW}],h=[{value:0},{value:stageH/2},{value:stageH}];others.forEach(el=>{v.push({value:el.x},{value:el.x+el.w/2},{value:el.x+el.w});h.push({value:el.y},{value:el.y+el.h/2},{value:el.y+el.h})});const sx=snapAxis(rect.x,rect.w,v,stageW,'v'),sy=snapAxis(rect.y,rect.h,h,stageH,'h');return{rect:{...rect,x:snap(sx.pos),y:snap(sy.pos)},guides:[sx.guide,sy.guide].filter(Boolean)}}
+function startModuleMove(e,m){if(isNav(m))return;const rect=cv.getBoundingClientRect();drag={scope:'module',mode:'move',mid:m.id,top:m.y,offsetY:e.clientY-rect.top-m.y,placeholderY:m.y-4}}
+function startModuleResize(e,m,dir){drag={scope:'module',mode:'resize',mid:m.id,dir,sx:e.clientX,sy:e.clientY,startWidth:m.width,startHeight:moduleHeight(m)}}
+function startElementMove(e,m,eid){const rect=currentElementRect(m,eid);if(!rect)return;drag={scope:'element',mode:'move',mid:m.id,eid,sx:e.clientX,sy:e.clientY,start:rect,guides:[]}}
+function startElementResize(e,m,eid,dir){const rect=currentElementRect(m,eid);if(!rect)return;drag={scope:'element',mode:'resize',mid:m.id,eid,dir,sx:e.clientX,sy:e.clientY,start:rect,guides:[]}}
+function moveModule(e){const m=current();if(!m||!drag)return;const rect=cv.getBoundingClientRect();drag.top=snap(Math.max(0,e.clientY-rect.top-drag.offsetY));const center=drag.top+moduleHeight(m)/2,rest=flowModules().filter(item=>item.id!==m.id);let nextIndex=rest.findIndex(item=>center<item.y+moduleHeight(item)/2);if(nextIndex<0)nextIndex=rest.length;if(nextIndex===0)drag.placeholderY=0;else if(nextIndex>=rest.length){const last=rest.at(-1);drag.placeholderY=last?last.y+moduleHeight(last)+6:0}else drag.placeholderY=rest[nextIndex].y-6;const flow=flowModules(),currentIndex=flow.findIndex(item=>item.id===m.id);if(currentIndex!==-1&&currentIndex!==nextIndex){const moving=flow.splice(currentIndex,1)[0];flow.splice(nextIndex,0,moving);const nav=navModule();modules=nav?[...flow,nav]:flow;layoutFlow()}renderCanvas()}
+function resizeModule(e){const m=current();if(!m||!drag)return;const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;let width=drag.startWidth,height=drag.startHeight;if(drag.dir.includes('e'))width=drag.startWidth+dx;if(drag.dir.includes('w'))width=drag.startWidth-dx;if(drag.dir.includes('s'))height=drag.startHeight+dy;if(drag.dir.includes('n'))height=drag.startHeight-dy;m.width=clamp(snap(width),180,SPEC[m.type].width);if(hasItems(m)){const rows=Math.max(1,Math.ceil(m.items.length/m.st.col));m.st.itemH=clamp(snap((height-Math.max(0,rows-1)*m.st.gap)/rows),56,400)}else m.height=clamp(snap(height),64,400);resetElementLayouts(m);renderAll()}
+function moveElement(e){const m=current();if(!m||!drag)return;const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy,rect={...drag.start,x:drag.start.x+dx,y:drag.start.y+dy},free=e.shiftKey;if(free){const raw={...rect,x:clamp(rect.x,0,m.width-rect.w),y:clamp(rect.y,0,moduleHeight(m)-rect.h)};drag.guides=[];saveElementRect(m,drag.eid,raw,{free:true})}else{const snapped=snapRect(m,drag.eid,rect);drag.guides=snapped.guides;saveElementRect(m,drag.eid,snapped.rect)}renderCanvas();renderDock()}
+function resizeElement(e){const m=current();if(!m||!drag)return;const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;let{x,y,w,h}=drag.start;if(drag.dir.includes('e'))w=drag.start.w+dx;if(drag.dir.includes('s'))h=drag.start.h+dy;if(drag.dir.includes('w')){x=drag.start.x+dx;w=drag.start.w-dx}if(drag.dir.includes('n')){y=drag.start.y+dy;h=drag.start.h-dy}w=clamp(snap(w),18,m.width);h=clamp(snap(h),14,moduleHeight(m));x=clamp(snap(x),0,m.width-w);y=clamp(snap(y),0,moduleHeight(m)-h);const snapped=snapRect(m,drag.eid,{x,y,w,h});drag.guides=snapped.guides;saveElementRect(m,drag.eid,snapped.rect);renderCanvas();renderDock()}
+function findModuleFromTarget(target){const el=target.closest('.module');if(!el)return null;return modules.find(m=>m.id===el.dataset.id)||null}
+function onPointerDown(e){if(e.target.closest('[contenteditable="true"]'))return;const mod=findModuleFromTarget(e.target)||(e.target.closest('#dock .module')?navModule():null);if(!mod)return;const elHandle=e.target.closest('[data-el-resize]');if(elHandle){e.stopPropagation();lastTextTap=null;if(!selectedElement||selectedElement.mid!==mod.id||selectedElement.eid!==elHandle.dataset.eid){selectedId=mod.id;selectedElement={mid:mod.id,eid:elHandle.dataset.eid};focusText=null;renderPanel();renderAuxPanel()}startElementResize(e,mod,elHandle.dataset.eid,elHandle.dataset.elResize);return}const modHandle=e.target.closest('[data-module-resize]');if(modHandle){e.stopPropagation();lastTextTap=null;if(selectedId!==mod.id||selectedElement){selectedId=mod.id;selectedElement=null;focusText=null;renderPanel();renderAuxPanel()}startModuleResize(e,mod,modHandle.dataset.moduleResize);return}const editable=e.target.closest('.editable');if(editable){e.stopPropagation();if(editable.dataset.selectable==='false'){lastTextTap=null;selectModule(mod.id);startModuleMove(e,mod);return}const sameTextTap=editable.dataset.kind==='text'&&lastTextTap&&lastTextTap.mid===mod.id&&lastTextTap.eid===editable.dataset.eid&&Date.now()-lastTextTap.ts<320;selectElement(mod.id,editable.dataset.eid,editable.dataset.path||null);if(sameTextTap){lastTextTap=null;requestAnimationFrame(()=>{const live=document.querySelector(`.editable[data-mid="${mod.id}"][data-eid="${editable.dataset.eid}"]`);if(live)activateInlineEdit(live)});return}if(editable.dataset.kind==='text'){lastTextTap={mid:mod.id,eid:editable.dataset.eid,ts:Date.now()};if(e.detail>=2)return}else lastTextTap=null;startElementMove(e,mod,editable.dataset.eid);return}lastTextTap=null;selectModule(mod.id);startModuleMove(e,mod)}
+function onPointerMove(e){if(!drag)return;if(drag.scope==='module'){if(drag.mode==='move')moveModule(e);else resizeModule(e)}else{if(drag.mode==='move')moveElement(e);else resizeElement(e)}}
+function onPointerUp(){if(!drag)return;const changed=drag.mode==='move'||drag.mode==='resize';drag=null;renderAll();if(changed)commitHistory()}
+function onDoubleClick(e){const text=resolveTextTarget(e.target);if(!text)return;e.preventDefault();e.stopPropagation();activateInlineEdit(text)}
+document.querySelectorAll('[data-add]').forEach(btn=>btn.addEventListener('click',()=>addModule(btn.dataset.add)));
+document.getElementById('undo')?.addEventListener('click',undoHistory);
+dup.addEventListener('click',duplicateSelected);
+del.addEventListener('click',deleteSelected);
+reset.addEventListener('click',()=>{const prev=captureState();resetState();historyStack=[prev,captureState()];updateUndoButton()});
+cv.addEventListener('pointerdown',onPointerDown);
+dock.addEventListener('pointerdown',onPointerDown);
+cv.addEventListener('dblclick',onDoubleClick);
+dock.addEventListener('dblclick',onDoubleClick);
+window.addEventListener('pointermove',onPointerMove);
+window.addEventListener('pointerup',onPointerUp);
+statusBar.addEventListener('pointerdown',e=>{startStatusHold(e)});
+statusBar.addEventListener('pointermove',e=>{if(statusDrag){e.preventDefault();moveStatusHold(e)}});
+statusBar.addEventListener('pointerup',endStatusHold);
+statusBar.addEventListener('pointerleave',()=>{if(!statusDrag)endStatusHold()});
+statusBar.addEventListener('pointercancel',endStatusHold);
+window.addEventListener('pointermove',moveStatusHold);
+window.addEventListener('pointerup',endStatusHold);
+window.addEventListener('pointercancel',endStatusHold);
+shot?.addEventListener('click',captureScreen);
+const targetMatch=(e,sel)=>e.target instanceof Element ? e.target.closest(sel) : null;
+const onGlobalKeydown=e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!targetMatch(e,'[contenteditable="true"]')){e.preventDefault();undoHistory();return}
+  if((e.key==='Delete'||e.key==='Backspace')&&!targetMatch(e,'input,textarea,[contenteditable="true"]')){e.preventDefault();deleteSelected()}
+};
+window.addEventListener('keydown',onGlobalKeydown);
+document.addEventListener('keydown',onGlobalKeydown,true);
+resetState();
+</script>
+</body>
+</html>
